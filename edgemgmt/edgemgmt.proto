@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package edgemgmt;
+
+option go_package = "example.com/go-edgemgmt-grpc;go_edgemgmt_grpc";
+
+service EdgeManagement {
+    rpc ActivateNewDevice (NewDevice) returns (ActivationStatus) {}
+}
+
+service EdgePayment {
+    rpc ProcessPayment (Payment) returns (PaymentStatus) {}
+}
+
+message NewDevice {
+    string merchantID = 1;
+    int32 deviceID = 2;
+
+}
+
+message ActivationStatus{
+    string merchantID = 1;
+    int32 deviceID = 2;
+    string deviceStatus =3;
+
+
+}
+
+message Payment{
+    string paymentRefNo = 1;
+    string paymentDetails = 2;
+
+}
+
+message PaymentStatus{
+    string paymentRefNo = 1;
+    string paymentStatus = 2;
+}
