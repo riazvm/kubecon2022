@@ -17,22 +17,29 @@ import (
 )
 
 const (
-	address = "localhost:50051"
+	address = "localhost:443"
 )
 
 func loadTLSCredentials() (credentials.TransportCredentials, error) {
-	pemServerCA, err := ioutil.ReadFile("cert/ca-cert.pem")
+	fmt.Printf("Recieved in load")
+	clientCert, err := tls.LoadX509KeyPair("cert/client/tls.crt", "cert/client/tls.key")
 	if err != nil {
 		return nil, err
 	}
-
+	pemServerCA, err := ioutil.ReadFile("cert/client/ca.crt")
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("Recieved in load 2")
 	certPool := x509.NewCertPool()
 	if !certPool.AppendCertsFromPEM(pemServerCA) {
 		return nil, fmt.Errorf("failed to add server CA's certificate")
 	}
 
 	config := &tls.Config{
-		RootCAs: certPool,
+		Certificates:       []tls.Certificate{clientCert},
+		RootCAs:            certPool,
+		InsecureSkipVerify: true,
 	}
 	return credentials.NewTLS(config), nil
 }
@@ -42,7 +49,7 @@ func main() {
 	http.HandleFunc("/edgeActivate", activateEdgeDevice)
 	http.HandleFunc("/edgePay", processPayment)
 	fmt.Printf("Starting server for testing HTTP POST...\n")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":9090", nil); err != nil {
 		log.Fatal(err)
 	}
 
@@ -64,12 +71,12 @@ func activateEdgeDevice(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	tlsCredentials, err := loadTLSCredentials()
+	/*tlsCredentials, err := loadTLSCredentials()
 	if err != nil {
 		log.Fatal("cannot load TLS credentials: ", err)
-	}
-
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(tlsCredentials), grpc.WithBlock())
+	}*/
+	//conn, err := grpc.Dial(address, grpc.WithTransportCredentials(tlsCredentials), grpc.WithBlock())
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -105,7 +112,7 @@ func processPayment(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("cannot load TLS credentials: ", err)
 	}
 
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(tlsCredentials), grpc.WithBlock())
+	conn, err := grpc.Dial("localhost", grpc.WithTransportCredentials(tlsCredentials), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

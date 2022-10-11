@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 
@@ -12,7 +15,7 @@ import (
 )
 
 const (
-	port = ":50051"
+	port = ":443"
 )
 
 type EdgeManagementServer struct {
@@ -41,13 +44,23 @@ func (s *EdgePaymentServer) ProcessPayment(ctx context.Context, in *pb.Payment) 
 }
 
 func loadTLSCredentials() (credentials.TransportCredentials, error) {
-	serverCert, err := tls.LoadX509KeyPair("cert/server-cert.pem", "cert/server-key.pem")
+	serverCert, err := tls.LoadX509KeyPair("cert/server/tls.crt", "cert/server/tls.key")
 	if err != nil {
 		return nil, err
+	}
+	pemServerCA, err := ioutil.ReadFile("cert/server/ca.crt")
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("Recieved in load 2")
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(pemServerCA) {
+		return nil, fmt.Errorf("failed to add server CA's certificate")
 	}
 	config := &tls.Config{
 		Certificates: []tls.Certificate{serverCert},
 		ClientAuth:   tls.NoClientCert,
+		RootCAs:      certPool,
 	}
 	return credentials.NewTLS(config), nil
 }
@@ -57,12 +70,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	tlsCredentials, err := loadTLSCredentials()
+	//tlsCredentials, err := loadTLSCredentials()
 	if err != nil {
 		log.Fatal("cannot load TLS credentials: ", err)
 	}
 	s := grpc.NewServer(
-		grpc.Creds(tlsCredentials),
+	//grpc.Creds(tlsCredentials),
 	)
 	pb.RegisterEdgeManagementServer(s, &EdgeManagementServer{})
 	pb.RegisterEdgePaymentServer(s, &EdgePaymentServer{})
