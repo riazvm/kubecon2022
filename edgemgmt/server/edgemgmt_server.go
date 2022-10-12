@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	port = ":443"
+	port = ":9443"
 )
 
 type EdgeManagementServer struct {
@@ -59,7 +59,7 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 	}
 	config := &tls.Config{
 		Certificates: []tls.Certificate{serverCert},
-		ClientAuth:   tls.NoClientCert,
+		ClientAuth:   tls.VerifyClientCertIfGiven,
 		RootCAs:      certPool,
 	}
 	return credentials.NewTLS(config), nil

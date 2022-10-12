@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	address = "localhost:443"
+	address = "localhost:9443"
 )
 
 func loadTLSCredentials() (credentials.TransportCredentials, error) {
@@ -37,9 +37,8 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 	}
 
 	config := &tls.Config{
-		Certificates:       []tls.Certificate{clientCert},
-		RootCAs:            certPool,
-		InsecureSkipVerify: true,
+		Certificates: []tls.Certificate{clientCert},
+		RootCAs:      certPool,
 	}
 	return credentials.NewTLS(config), nil
 }
@@ -112,7 +111,7 @@ func processPayment(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("cannot load TLS credentials: ", err)
 	}
 
-	conn, err := grpc.Dial("localhost", grpc.WithTransportCredentials(tlsCredentials), grpc.WithBlock())
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(tlsCredentials), grpc.WithTimeout(5*time.Second), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

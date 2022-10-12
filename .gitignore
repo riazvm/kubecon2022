@@ -1,0 +1,6 @@
+cert/client/ca.crt
+cert/client/tls.crt
+cert/client/tls.key
+cert/server/ca.crt
+cert/server/tls.crt
+cert/server/tls.key
